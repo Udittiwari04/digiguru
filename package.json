@@ -10,8 +10,8 @@
    
     
     "start": "node server.js",
-    "install": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm install",
-     "postinstall": "puppeteer install"
+    "install": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true",
+    "postinstall": "node node_modules/puppeteer/install.js"
   },
   "author": "udit Tiwari",
   "license": "ISC",
