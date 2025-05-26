@@ -2,6 +2,7 @@
 
 const express = require('express');
 const puppeteer = require('puppeteer');
+const chromium = require('puppeteer');
 const path = require('path');
 const cors = require('cors');
 
@@ -35,6 +36,7 @@ app.post('/api/screenshot', async (req, res) => {
         // Launch Puppeteer with more robust settings
         browser = await puppeteer.launch({
             headless: 'new',
+             executablePath: chromium.executablePath(),
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
