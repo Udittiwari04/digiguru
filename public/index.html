@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive - File Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8f9fa;
+            color: #202124;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #dadce0;
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .drive-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(45deg, #4285f4, #34a853, #fbbc04, #ea4335);
+            border-radius: 4px;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 16px 12px 48px;
+            border: 1px solid #dadce0;
+            border-radius: 24px;
+            font-size: 16px;
+            background-color: #f1f3f4;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            opacity: 0.6;
+        }
+
+        .toolbar {
+            background: white;
+            padding: 12px 24px;
+            border-bottom: 1px solid #dadce0;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .new-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .new-btn:hover {
+            background: #1557b0;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .view-btn {
+            background: none;
+            border: 1px solid #dadce0;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .view-btn.active {
+            background: #e8f0fe;
+            border-color: #4285f4;
+        }
+
+        .content {
+            padding: 24px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .breadcrumb-item {
+            color: #5f6368;
+            text-decoration: none;
+        }
+
+        .breadcrumb-item:hover {
+            color: #1a73e8;
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .file-item {
+            background: white;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .file-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }
+
+        .doc-icon { background: #4285f4; }
+        .sheet-icon { background: #34a853; }
+        .slide-icon { background: #ff9800; }
+        .pdf-icon { background: #ea4335; }
+        .folder-icon { background: #5f6368; }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .file-info {
+            font-size: 12px;
+            color: #5f6368;
+        }
+
+        .infographic-section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin: 32px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 24px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #202124;
+        }
+
+        .progress-bar {
+            background: #f1f3f4;
+            height: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4285f4, #34a853);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .screenshot-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 28px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .screenshot-btn:hover {
+            background: #1557b0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(26, 115, 232, 0.4);
+        }
+
+        .notification {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: #34a853;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .notification.show {
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="drive-icon"></div>
+            <span style="font-size: 18px; font-weight: 500;">Drive</span>
+        </div>
+        <div class="search-container">
+            <input type="text" class="search-box" placeholder="Search in Drive">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+        </div>
+    </header>
+
+    <div class="toolbar">
+        <button class="new-btn">
+            <span>+</span>
+            New
+        </button>
+        <div class="view-controls">
+            <button class="view-btn active">⊞</button>
+            <button class="view-btn">☰</button>
+        </div>
+    </div>
+
+    <main class="content">
+        <nav class="breadcrumb">
+            <a href="#" class="breadcrumb-item">My Drive</a>
+            <span>›</span>
+            <a href="#" class="breadcrumb-item">Infographics</a>
+            <span>›</span>
+            <span class="breadcrumb-item" style="color: #202124; font-weight: 500;">Data Analytics Dashboard</span>
+        </nav>
+
+        <div class="infographic-section">
+            <h1 style="font-size: 28px; font-weight: 600; margin-bottom: 16px; color: #202124;">
+                📊 Digital Analytics Dashboard 2024
+            </h1>
+            <p style="font-size: 16px; color: #5f6368; margin-bottom: 32px;">
+                Comprehensive overview of digital performance metrics and key insights
+            </p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">2.4M</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="stat-number">68%</div>
+                    <div class="stat-label">Conversion Rate</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="stat-number">$1.2M</div>
+                    <div class="stat-label">Revenue</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <div class="stat-number">94%</div>
+                    <div class="stat-label">Satisfaction</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2 class="chart-title">Performance Metrics</h2>
+                
+                <div style="margin: 20px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Website Traffic</span>
+                        <span>85%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%;"></div>
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Mobile Engagement</span>
+                        <span>72%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 72%; background: linear-gradient(90deg, #f093fb, #f5576c);"></div>
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Social Media Reach</span>
+                        <span>91%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 91%; background: linear-gradient(90deg, #4facfe, #00f2fe);"></div>
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Customer Retention</span>
+                        <span>78%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 78%; background: linear-gradient(90deg, #43e97b, #38f9d7);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px;">
+                <div style="background: #f8f9fa; padding: 24px; border-radius: 12px;">
+                    <h3 style="color: #202124; margin-bottom: 16px;">📈 Growth Highlights</h3>
+                    <ul style="color: #5f6368; line-height: 1.6;">
+                        <li>User base increased by 45% this quarter</li>
+                        <li>Mobile traffic up 62% year-over-year</li>
+                        <li>New feature adoption rate: 73%</li>
+                        <li>Customer support satisfaction: 96%</li>
+                    </ul>
+                </div>
+                <div style="background: #f8f9fa; padding: 24px; border-radius: 12px;">
+                    <h3 style="color: #202124; margin-bottom: 16px;">🎯 Key Insights</h3>
+                    <ul style="color: #5f6368; line-height: 1.6;">
+                        <li>Peak usage hours: 2-4 PM EST</li>
+                        <li>Top performing content: Video tutorials</li>
+                        <li>Primary traffic source: Organic search</li>
+                        <li>Average session duration: 4.2 minutes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="file-grid">
+            <div class="file-item">
+                <div class="file-icon doc-icon"></div>
+                <div class="file-name">Q4 Report.docx</div>
+                <div class="file-info">Modified yesterday</div>
+            </div>
+            <div class="file-item">
+                <div class="file-icon sheet-icon"></div>
+                <div class="file-name">Analytics Data.xlsx</div>
+                <div class="file-info">Modified 2 days ago</div>
+            </div>
+            <div class="file-item">
+                <div class="file-icon slide-icon"></div>
+                <div class="file-name">Presentation.pptx</div>
+                <div class="file-info">Modified last week</div>
+            </div>
+            <div class="file-item">
+                <div class="file-icon pdf-icon"></div>
+                <div class="file-name">User Guide.pdf</div>
+                <div class="file-info">Modified last month</div>
+            </div>
+        </div>
+    </main>
+
+    <button class="screenshot-btn" onclick="takeScreenshot()">
+        📸 Take Screenshot
+    </button>
+
+    <div class="notification" id="notification">
+        <span>✓</span>
+        <span>Screenshot captured successfully!</span>
+    </div>
+    <script>
+        // Animate progress bars on load
+        window.addEventListener('load', function() {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 500);
+            });
+        });
+
+        // Screenshot functionality
+        async function takeScreenshot() {
+            const btn = document.querySelector('.screenshot-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Capturing...';
+            btn.disabled = true;
+
+            try {
+                // Call backend API
+                const response = await fetch('/api/screenshot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: window.location.href,
+                        filename: `infographic-${Date.now()}.png`
+                    })
+                });
+
+                if (response.ok) {
+                    // Download the screenshot
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `infographic-screenshot-${Date.now()}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    // Show success notification
+                    showNotification();
+                } else {
+                    throw new Error('Failed to capture screenshot');
+                }
+            } catch (error) {
+                console.error('Screenshot error:', error);
+                alert('Failed to capture screenshot. Please try again.');
+            } finally {
+                // Reset button
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function showNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Add some interactive effects
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', function() {
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 150);
+            });
+        });
+    </script>
+</body>
+</html>
