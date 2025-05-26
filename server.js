@@ -1,8 +1,5 @@
-
-
 const express = require('express');
 const puppeteer = require('puppeteer');
-
 const path = require('path');
 const cors = require('cors');
 
@@ -33,10 +30,9 @@ app.post('/api/screenshot', async (req, res) => {
 
         console.log(`Taking screenshot of: ${url}`);
 
-        // Launch Puppeteer with more robust settings
-        browser = await puppeteer.launch({
+        // Configure Puppeteer for Render deployment
+        const puppeteerOptions = {
             headless: 'new',
-            
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -44,14 +40,21 @@ app.post('/api/screenshot', async (req, res) => {
                 '--disable-accelerated-2d-canvas',
                 '--no-first-run',
                 '--no-zygote',
-                '--disable-gpu'
+                '--disable-gpu',
+                '--single-process', // Important for Render
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding'
             ],
-            executablePath: '/usr/bin/chromium-browser',
-            // Add these options for better resource management
             ignoreHTTPSErrors: true,
             defaultViewport: null,
             timeout: 30000
-        });
+        };
+
+        // Don't specify executablePath - let Puppeteer find Chrome automatically
+        // Remove the executablePath line that was causing the issue
+
+        browser = await puppeteer.launch(puppeteerOptions);
 
         const page = await browser.newPage();
         
@@ -62,28 +65,24 @@ app.post('/api/screenshot', async (req, res) => {
             deviceScaleFactor: 1
         });
 
-
-        
         // Configure page behavior
-        await page.setDefaultNavigationTimeout(10000); // Reduced from 30000 to 10000 ms
-        await page.setDefaultTimeout(7000); // Reduced from 15000 to 7000 ms
+        await page.setDefaultNavigationTimeout(10000);
+        await page.setDefaultTimeout(7000);
 
         // Navigate to the URL with better error handling
         try {
             await page.goto(url, {
                 waitUntil: ['load', 'domcontentloaded', 'networkidle0'],
-                timeout: 10000 // Reduced from 30000 to 10000 ms
+                timeout: 10000
             });
         } catch (navigationError) {
             console.warn('Navigation warning:', navigationError.message);
-            
         }
 
-        // Wait for page to stabilize (optional: you can reduce/remove this for speed)
+        // Wait for page to stabilize
         await page.waitForFunction(() => {
             return document.readyState === 'complete';
         }, { timeout: 5000 }); 
-
 
         const screenshot = await page.screenshot({
             type: 'png',
