@@ -46,6 +46,7 @@ app.post('/api/screenshot', async (req, res) => {
                 '--no-zygote',
                 '--disable-gpu'
             ],
+            executablePath: '/usr/bin/chromium-browser',
             // Add these options for better resource management
             ignoreHTTPSErrors: true,
             defaultViewport: null,
